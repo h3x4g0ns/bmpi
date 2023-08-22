@@ -1,14 +1,12 @@
 package main
 
 import (
-	"os"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
-	"github.com/gorilla/sessions"
-	"github.com/google/uuid"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/sessions"
 )
 
 var (
@@ -18,15 +16,15 @@ var (
 func init() {
 	store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   86400 * 7,  // 1 week
+		MaxAge:   86400 * 7, // 1 week
 		HttpOnly: true,
 	}
 }
 
-func (h *AppHandler) registerHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) registerHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	
+
 	salt := generateSalt()
 	hashedPassword := hashPasswordWithSalt(password, salt)
 
@@ -35,7 +33,7 @@ func (h *AppHandler) registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("User registered successfully!"))
 }
 
-func (h *AppHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 

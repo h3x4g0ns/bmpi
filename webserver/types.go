@@ -4,6 +4,6 @@ import (
 	"database/sql"
 )
 
-type AppHandler struct {
+type AuthHandler struct {
 	db *sql.DB
 }

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"net/http"
 	"database/sql"
 	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,7 +17,6 @@ func initDB(filepath string) *AuthHandler {
 
 	statement, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)`)
 	statement.Exec()
-	return db
 
 	authHandler := &AuthHandler{
 		db: db,
