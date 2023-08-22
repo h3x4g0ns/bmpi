@@ -13,7 +13,7 @@ cc_library(
 )
 
 pybind_extension(
-    name = "Jaso",
+    name = "Jado",
     srcs = ["binding.cpp"],
     hdrs = ["data_struct.h"],
     deps = [
