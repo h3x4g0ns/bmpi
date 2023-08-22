@@ -30,8 +30,13 @@ def run_webserver():
     command = "cd webserver && go run main.go"
     return run_command(command, app_name, "green")
 
+def run_viz():
+    app_name = "viz"
+    command = "cd viz && npm run start"
+    return run_command(command, app_name, "red")
+
 # Runs each service as a seperate thread
-thread_names = [run_webserver]
+thread_names = [run_webserver, run_viz]
 threads = [threading.Thread(target=thread) for thread in thread_names]
 init()
 [thread.start() for thread in threads]
