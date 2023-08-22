@@ -1,14 +1,13 @@
-package main
+package handlers
 
 import (
-	"os"
+	"crypto/rand"
 	"crypto/sha256"
-	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
-	"github.com/gorilla/sessions"
+	"log"
+
 	"github.com/google/uuid"
-	"net/http"
 )
 
 func generateSalt() string {

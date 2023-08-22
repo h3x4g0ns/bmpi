@@ -1,9 +1,9 @@
-package main
+package handlers
 
 import (
 	"database/sql"
 )
 
 type AuthHandler struct {
-	db *sql.DB
+	DB *sql.DB
 }

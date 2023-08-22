@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"database/sql"
@@ -28,7 +28,7 @@ func (h *AuthHandler) registerHandler(w http.ResponseWriter, r *http.Request) {
 	salt := generateSalt()
 	hashedPassword := hashPasswordWithSalt(password, salt)
 
-	statement, _ := h.db.Prepare("INSERT INTO users (username, password, salt) VALUES (?, ?, ?)")
+	statement, _ := h.DB.Prepare("INSERT INTO users (username, password, salt) VALUES (?, ?, ?)")
 	statement.Exec(username, hashedPassword, salt)
 	w.Write([]byte("User registered successfully!"))
 }
@@ -37,7 +37,7 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	row := h.db.QueryRow("SELECT password, salt FROM users WHERE username=?", username)
+	row := h.DB.QueryRow("SELECT password, salt FROM users WHERE username=?", username)
 
 	var retrievedHashedPassword, salt string
 	if err := row.Scan(&retrievedHashedPassword, &salt); err == sql.ErrNoRows {
