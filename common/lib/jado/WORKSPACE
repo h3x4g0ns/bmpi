@@ -1,0 +1,11 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "pybind11",
+    sha256 = "<SHA256_SUM>",  # Update this with the actual SHA256.
+    strip_prefix = "pybind11-<VERSION>",  # Update with the version you are fetching.
+    url = "https://github.com/pybind/pybind11/archive/v<VERSION>.tar.gz",  # Update with the version you want.
+)
+
+load("@pybind11//:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")
