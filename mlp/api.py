@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-from config import Model
-from cache import ModelCache
+from .config import Model
+from .cache import ModelCache
 import logging
 import time
 

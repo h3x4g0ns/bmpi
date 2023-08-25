@@ -36,6 +36,7 @@ class Model:
     self.model = torch.compile(self.model)
     self.model.eval()
     self.transforms = None
+    self._size = None
 
   def forward(self, x):
     input_data = self.transforms(x)
@@ -46,4 +47,17 @@ class Model:
   def __call__(self, x):
     y = self.forward(x)
     return y.numpy().tolist()
+  
+  @property
+  def size(self):
+    if not self._size:
+      param_size = 0
+      for param in self.model.parameters():
+          param_size += param.nelement() * param.element_size()
+      buffer_size = 0
+      for buffer in self.model.buffers():
+          buffer_size += buffer.nelement() * buffer.element_size()
+
+      self._size = (param_size + buffer_size) / 1024**2
+    return self._size
     

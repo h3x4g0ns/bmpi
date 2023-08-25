@@ -1,6 +1,7 @@
 import time
 from collections import OrderedDict
 import torch
+import io
 
 class GPUCache:
   def __init__(self, ttl=300):
@@ -35,7 +36,7 @@ class GPUCache:
     Add a model to the cache
     Evicts models if there's not enough GPU memory
     """
-    model_size = self._get_gpu_free_memory()
+    model_size = model.size
     if model_size > self._get_gpu_free_memory():
       if not self._evict_models(model_size):
         # Even after eviction, we couldn't free up enough memory
