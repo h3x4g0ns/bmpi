@@ -33,10 +33,15 @@ def run_webserver():
 def run_viz():
     app_name = "viz"
     command = "cd viz && npm run start"
-    return run_command(command, app_name, "red")
+    return run_command(command, app_name, "magenta")
+
+def run_mlp():
+    app_name = "mlp"
+    command = "cd mlp && python api.py"
+    return run_command(command, app_name, "blue")
 
 # Runs each service as a seperate thread
-thread_names = [run_webserver, run_viz]
+thread_names = [run_webserver, run_viz, run_mlp]
 threads = [threading.Thread(target=thread) for thread in thread_names]
 init()
 [thread.start() for thread in threads]
