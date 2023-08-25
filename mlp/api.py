@@ -1,36 +1,23 @@
 from flask import Flask, request, jsonify
-import torch
-import torch.nn as nn
-from torchvision import transforms
+from config import Model
+from cache import ModelCache
 
 app = Flask(__name__)
 
-# Load your model (for demonstration, I'm assuming a simple model structure)
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(3, 1)  # Change this to your model architecture
+cache = ModelCache()
 
-    def forward(self, x):
-        return self.fc(x)
-
-model = SimpleModel()
-model.load_state_dict(torch.load("your_model_path.pth"))
-model.compile()
-model.eval()
-
-@app.route("/predict", methods=["POST"])
+@app.route("/api/v1/simple_model", methods=["POST"])
 def predict():
     try:
+        model_name = "simple_model"
+        model = cache.get(model_name)
+        if not model:
+            model = Model(model_name="simple_model")
         data = request.json['data']
-        tensor_data = torch.tensor(data, dtype=torch.float32)
-        with torch.no_grad():
-          prediction = model(tensor_data)
-        
+        prediction = model(data)
         response = {
-            'prediction': prediction.numpy().tolist()
+            'prediction': prediction
         }
-
         return jsonify(response), 200
 
     except Exception as e:
