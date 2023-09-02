@@ -1,6 +1,6 @@
 # bmpi
 
-**B**are **M**etal **R**aspberry **P**i
+**B**are **M**etal Raspberry **PI**
 
 Building, testing, and deploying bare metal applications directly on to PIs.
 
