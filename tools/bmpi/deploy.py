@@ -1,8 +1,11 @@
-import os
+import json
 
 def run_command(args):
-    print("Executing Command 1")
-    print(args)
+    with open(args.config, "r") as f:
+        dump = json.load(f)
+    applications = dump["applications"]
+    for app in applications:
+        print(f"deploying {app} onto {args.device}")
 
 def setup(subparsers):
     parser = subparsers.add_parser("deploy", help="deploy applications to device")
