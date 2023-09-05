@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (frameCount % 2 == 0) { // Send every other frame
+        if (frameCount % 3 == 0) { // Send every other frame
             // Serialize Mat object
             std::vector<uchar> buffer;
             imencode(".jpg", frame, buffer);
