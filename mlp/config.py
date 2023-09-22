@@ -26,15 +26,12 @@ model_config = {
 
 class Model:
   def __init__(self, model_name):
-    model = model_config[model_name]["model"]
-    params = model["param"]
-    dtype = model["dtype"]
-    self.transforms = transforms.Compose(model["transforms"])
-    self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    self.model = model["model"](**params)
-    self.model = self.model.to(device=self.device, dtype=dtype)
-    self.model = torch.compile(self.model)
-    self.model.eval()
+    config = model_config[model_name]
+    self.name = model_name
+    self.setup_model = config["model"]
+    self.params = config["param"]
+    self.dtype = config["dtype"]
+    self.transforms = transforms.Compose(config["transforms"])
     self.transforms = None
     self._size = None
 
@@ -47,6 +44,13 @@ class Model:
   def __call__(self, x):
     y = self.forward(x)
     return y.numpy().tolist()
+
+  def load(self, cache):
+    model = self.setup_model(**self.params)
+    self.model = torch.compile(self.model)
+    status, self.device = cache.set(self.name, self.model, self.dtype)
+    self.model.eval()
+
   
   @property
   def size(self):

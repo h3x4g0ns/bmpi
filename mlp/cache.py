@@ -1,81 +1,90 @@
 import time
 from collections import OrderedDict
 import torch
-import io
 
 class GPUCache:
-  def __init__(self, ttl=300):
+  def __init__(self, num_gpus=1, ttl=300):
     """
     Initialize the cache
     Param:
+      num_gpus: Number of GPUs to be managed by the cache.
       ttl: Time to live (expiry time) in seconds for each cache item.
     """
-    self.cache = OrderedDict()
+    self.caches = [OrderedDict() for _ in range(num_gpus)]
     self.ttl = ttl
-
-  def _get_gpu_free_memory(self):
+    self.num_gpus = num_gpus
+    self.current_gpu = 0  # For round-robin allocation
+  
+  def _get_gpu_free_memory(self, device):
     """
-    Retrieve the available GPU memory
+    Retrieve the available GPU memory for a given device
     """
     torch.cuda.empty_cache()  # Clear unused memory
-    return torch.cuda.memory_reserved() - torch.cuda.memory_allocated()
+    return torch.cuda.memory_reserved(device) - torch.cuda.memory_allocated(device)
 
-  def _evict_models(self, required_space):
+  def _evict_models(self, required_space, device):
     """
-    Evict models based on LRU and required space
+    Evict models based on LRU and required space for a specific device
     """
+    cache = self.caches[device.index]
     evicted_space = 0
-    while evicted_space < required_space and self.cache:
-      key, (timestamp, model, size) = self.cache.popitem(last=False)
+    while evicted_space < required_space and cache:
+      key, (timestamp, model, size) = cache.popitem(last=False)
       evicted_space += size
-      del model  # Ensure the model is deleted and memory is freed
+      del model
     return evicted_space >= required_space
 
-  def set(self, key, model):
+  def set(self, key, model, dtype):
     """
     Add a model to the cache
     Evicts models if there's not enough GPU memory
     """
-    model_size = model.size
-    if model_size > self._get_gpu_free_memory():
-      if not self._evict_models(model_size):
-        # Even after eviction, we couldn't free up enough memory
-        return False
+    device = torch.device(f"cuda:{self.current_gpu}")
+    model_size = torch.numel(model) * model.element_size()  # size in bytes
 
+    if model_size > self._get_gpu_free_memory(device):
+      if not self._evict_models(model_size, device):
+        return False, -1
+    
     # Cache the model
-    if key in self.cache:
-      del self.cache[key]
-    self.cache[key] = (time.time(), model, model_size)
-    return True
+    model = model.to(device=device, dtype=dtype)  # Move model to the appropriate GPU
+    cache = self.caches[self.current_gpu]
+    if key in cache:
+      del cache[key]
+    cache[key] = (time.time(), model, model_size)
+    
+    # Round-robin for next allocation
+    self.current_gpu = (self.current_gpu + 1) % self.num_gpus
+    return True, device
 
   def get(self, key):
     """
     Retrieve a model from the cache by key
     If the key does not exist or the item is expired, it returns None
     """
-    if key in self.cache:
-      timestamp, model, _ = self.cache[key]
-      if time.time() - timestamp <= self.ttl:
-        # Move the accessed model to the end
-        del self.cache[key]
-        self.cache[key] = (timestamp, model, _)
-        return model
-      else:
-        # Model has expired
-        del self.cache[key]
-    
+    for device_index, cache in enumerate(self.caches):
+      if key in cache:
+        timestamp, model, _ = cache[key]
+        if time.time() - timestamp <= self.ttl:
+          device = torch.device(f"cuda:{device_index}")
+          model = model.to(device)  # Move model to the appropriate GPU if needed
+          del cache[key]
+          cache[key] = (timestamp, model, _)
+          return model
+        else:
+          del cache[key]
     return None
 
   def clear_expired(self):
     """
     Clear all expired models from the cache
     """
-    to_remove = []
-    for key, (timestamp, _, _) in self.cache.items():
-      if time.time() - timestamp > self.ttl:
-        to_remove.append(key)
-      else:
-        break
-
-    for key in to_remove:
-      del self.cache[key]
+    for cache in self.caches:
+      to_remove = []
+      for key, (timestamp, _, _) in cache.items():
+        if time.time() - timestamp > self.ttl:
+          to_remove.append(key)
+        else:
+          break
+      for key in to_remove:
+        del cache[key]
